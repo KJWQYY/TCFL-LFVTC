@@ -11,7 +11,7 @@ import argparse
 import os
 
 #from dataloader.Douban.dataset_clip import (trailer_multimodal_features,)
-from dataloader.dataset_L_3 import trailer_multimodal_features
+from dataloader.dataset_stagetwo import trailer_multimodal_features
 from sklearn.metrics import precision_score, recall_score, average_precision_score
 from sklearn.metrics import coverage_error
 from sklearn.metrics import label_ranking_loss
@@ -26,7 +26,14 @@ def sigmoid(x):
 
 def ranking_loss(true_labels, predictions):
     """
-    ranking_loss。
+    计算排名损失（Ranking Loss）。
+
+    参数:
+    true_labels: 二进制数组，形状为 (n_samples, n_labels)，表示真实标签。
+    predictions: 实数数组，形状为 (n_samples, n_labels)，表示模型输出的标签分数。
+
+    返回:
+    ranking_loss: 排名损失的值。
     """
     n_samples, n_labels = true_labels.shape
 
@@ -233,18 +240,23 @@ def test_main(args):
     outputs_sigmoid = sigmoid(outputs)
     print("outputs shape:", outputs.shape, labels.shape)
     average_choice = ['micro', 'samples', 'weighted', 'macro']
+    r = 0.5
     mAP = {}
     precision = {}
     recall = {}
     for i in range(4):
+        #mAP['+++++++++'] = mean_average_precision(labels, outputs_sigmoid)
+
         mAP[average_choice[i]] = average_precision_score(labels[:, :], outputs_sigmoid[:, :], average=average_choice[i])
-        precision[average_choice[i]] = precision_score(labels, outputs_sigmoid >= 0.5, average=average_choice[i])
-        recall[average_choice[i]] = recall_score(labels, outputs_sigmoid >= 0.5, average=average_choice[i])
+        precision[average_choice[i]] = precision_score(labels, outputs_sigmoid >= r, average=average_choice[i])
+        recall[average_choice[i]] = recall_score(labels, outputs_sigmoid >= r, average=average_choice[i])
+    #print("+++++++++: ", recall['+++++++++'])
     coverageloss = coverage_error(labels, outputs_sigmoid)
     rl = label_ranking_loss(labels, outputs_sigmoid)
     print("recall-macro: ", recall['macro'])
     print("precision-macro: ", precision['macro'])
     print("mAP-macro: ", mAP['macro'])
+
     print("recall-micro: ", recall['micro'])
     print("precision-micro: ", precision['micro'])
     print("mAP-micro: ", mAP['micro'])
@@ -279,6 +291,23 @@ def test_main(args):
         # print(pcorrect/ptotal)
         precisions[j] = -0.01 if ptotal == 0 else pcorrect / ptotal
         recalls[j] = -0.01 if rtotal == 0 else rcorrect / rtotal
+
+    # with open(os.path.join(config['data_dir'], "vocab/vocab_genres21.json"), "r") as f:
+    #     vocab_genre21 = json.load(f)
+    #
+    # plt.figure()
+    # plt.bar(vocab_genre21.keys(), precisions.values())
+    # plt.xticks(rotation=65)
+    # plt.title('precisions')
+    # if args.save_results:
+    #     plt.savefig(os.path.join(args.model_path, "precision_percategory.png"), bbox_inches='tight')
+    #
+    # plt.figure()
+    # plt.bar(vocab_genre21.keys(), recalls.values())
+    # plt.xticks(rotation=65)
+    # plt.title('recalls')
+    # if args.save_results:
+    #     plt.savefig(os.path.join(args.model_path, "recall_percategory.png"), bbox_inches='tight')
 
     if args.save_results:
         test_results = {}
