@@ -2,12 +2,18 @@ import json
 import os
 from PIL import Image
 import torch
+import torchvision.transforms as transforms
 import numpy as np
 from torch.utils.data import Dataset
 import pickle
 from sklearn.preprocessing import MultiLabelBinarizer
 import torch.nn as nn
 
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
 
 class trailer_multimodal_features(Dataset):
     def __init__(self,
@@ -57,7 +63,9 @@ class trailer_multimodal_features(Dataset):
             print('load visual features from:', os.path.join(self.visual_feature_dir, visual_feature_file))
             with open(os.path.join(self.visual_feature_dir, visual_feature_file) ,'rb') as handle:
                 self.visual_feature_dict = pickle.load(handle)
-
+            #aug_visual_feature_file="aug_ViT-L-14-336_{}.pkl".format(phase)
+            #aug_visual_feature_file = 'aug_' + visual_feature_file
+            #aug_visual_feature_file = visual_feature_file.replace('VTM', 'mean')
             VTM_visual_feature_file = 'VTM_' + visual_feature_file
             print('load vtm visual features from:', os.path.join(self.visual_feature_dir, VTM_visual_feature_file))
             with open(os.path.join(self.visual_feature_dir, VTM_visual_feature_file) ,'rb') as handle:
@@ -68,6 +76,10 @@ class trailer_multimodal_features(Dataset):
             with open(os.path.join(self.visual_feature_dir, cau_visual_feature_file) ,'rb') as handle:
                 self.cau_visual_feature_dict = pickle.load(handle)
 
+            # cau_aug_visual_feature_file="cau_aug_ViT-L-14-336_{}.pkl".format(phase)
+            # print('load cau aug visual features from:', os.path.join(self.visual_feature_dir, cau_aug_visual_feature_file))
+            # with open(os.path.join(self.visual_feature_dir, cau_aug_visual_feature_file) ,'rb') as handle:
+            #     self.cau_aug_visual_feature_dict = pickle.load(handle)
         if self.audio_feature_file is not None:
             print('load audio features from:', self.audio_feature_file)
             with open(audio_feature_file, 'rb') as handle:
@@ -94,6 +106,7 @@ class trailer_multimodal_features(Dataset):
                 self.text_feature_dict = pickle.load(handle)
 
             VTM_text_feature_file = self.text_feature_file.replace('w', 'VTM')
+            #VTM_text_feature_file = self.text_feature_file
             print('load aug text features from:', VTM_text_feature_file)
             with open(VTM_text_feature_file,"rb") as handle:
                 self.VTM_text_feature_dict = pickle.load(handle)
@@ -135,6 +148,14 @@ class trailer_multimodal_features(Dataset):
             for key, value in sample.items():
                 if key == 'label': continue
 
+                # shot_frame0_path = value[0].replace(self.data_dir+"/","",1)
+                # shot_frame0_path = shot_frame0_path.split('/')[-2]
+                #
+                # shot_frame0_feature = self.visual_feature_dict[shot_frame0_path]
+                # visual_feature_list.append(shot_frame0_feature)
+                #
+                # shot_frame0_feature = self.aug_visual_feature_dict[shot_frame0_path]
+                # aug_visual_feature_list.append(shot_frame0_feature)
 
                 shot_frame0_path = value[0].replace(self.data_dir+"/","",1)
                 shot_frame1_path = value[1].replace(self.data_dir+"/","",1)
@@ -152,7 +173,8 @@ class trailer_multimodal_features(Dataset):
                 shot_frame_feature = self.VTM_visual_feature_dict[shot_frame_path] # (1,512)
                 VTM_visual_feature_list.append(shot_frame_feature)
 
-            #has only 1-2 shot
+            #some has only 1-2 shot
+
             if len(visual_feature_list) < 8:
                 num = 8-len(visual_feature_list)
                 for _ in range(num):
@@ -174,16 +196,28 @@ class trailer_multimodal_features(Dataset):
                 shot_frame0_path = shot_frame0_path.split('/')[-2]
                 shot_frame0_feature = self.cau_visual_feature_dict[shot_frame0_path]
                 cau_visual_feature_list.append(shot_frame0_feature)
-
+                # shot_frame0_feature = self.cau_aug_visual_feature_dict[shot_frame0_path]  # (1,512)
+                # cau_aug_visual_feature_list.append(shot_frame0_feature)
             if len(cau_visual_feature_list) < 8:
                 num = 8-len(cau_visual_feature_list)
                 for _ in range(num):
                     cau_visual_feature_list.append(cau_visual_feature_list[0])
             cau_visual_features = np.concatenate(cau_visual_feature_list , axis=0)
             return_dict["cau_visual_feature"] = cau_visual_features
-
+            # if len(cau_aug_visual_feature_list) < 5:
+            #     #print(len(aug_visual_feature_list))
+            #     num = 5-len(cau_aug_visual_feature_list)
+            #     for _ in range(num):
+            #         cau_aug_visual_feature_list.append(cau_aug_visual_feature_list[0])
+            # cau_aug_visual_features = np.concatenate(cau_aug_visual_feature_list , axis=0)
+            # return_dict["cau_aug_visual_feature"] = cau_aug_visual_features
         if self.text_feature_file is not None:
             w_text_features = self.text_feature_dict[movie_id]
+
+            # weights_expanded = text_features['w'][:, np.newaxis]
+            # weighted_feats = text_features['topic'] * weights_expanded
+            # result = np.sum(weighted_feats, axis=0)
+            # return_dict["topic_feature"] = result
 
             return_dict["topic_feature"] = w_text_features
 
