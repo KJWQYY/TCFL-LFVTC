@@ -7,7 +7,8 @@ from utils.tools import *
 import json
 from dataloader.dataset_stagetwo import trailer_multimodal_features
 import torch.optim as optim
-from model import JEM
+from model import StageTwo
+#from model import StageTwo_11
 import torch.nn as nn
 from sklearn.metrics import average_precision_score, precision_score, recall_score
 from sklearn.metrics import coverage_error, label_ranking_loss
@@ -135,7 +136,7 @@ def main(args):
     train_loader = torch.utils.data.DataLoader(traindata, batch_size=args.batch_size, shuffle=False, num_workers=args.n_cpu, pin_memory=False)
     val_loader = torch.utils.data.DataLoader(valdata, batch_size=args.batch_size, shuffle=False, num_workers=args.n_cpu, pin_memory=False)
 
-    model = JEM.JEM(args.hidden_dim, args.num_layers, args.num_heads, args.meta_num, args.ori_len, args.a_len, args.cau_len, args.type_num, args.num_categories)
+    model = StageTwo.JEM(args.hidden_dim, args.num_layers, args.num_heads, args.meta_num, args.ori_len, args.a_len, args.cau_len, args.type_num, args.num_categories)
     model = model.to(device)
     optimizer = optim.Adam(model.parameters(),  lr=args.lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', factor=0.5, patience=0, verbose=True)
@@ -158,18 +159,18 @@ def main(args):
             print('saving the %d epoch' % (epoch))
             torch.save(model, log_name + "/epoch-%d.pkl" % (epoch))
 
-    # f_logger.write("best epoch num: %d" % best_epoch)
-    # f_logger.close()
-    #
-    # results = vars(args)
-    # results.update({'best_epoch_mAP': best_macro_mAP, 'best_epoch': best_epoch})
-    #
-    # with open(os.path.join(log_name, "train_info.json"), 'w') as f:
-    #     json.dump(results, f, indent=2)
+    f_logger.write("best epoch num: %d" % best_epoch)
+    f_logger.close()
+
+    results = vars(args)
+    results.update({'best_epoch_mAP': best_macro_mAP, 'best_epoch': best_epoch})
+
+    with open(os.path.join(log_name, "train_info.json"), 'w') as f:
+        json.dump(results, f, indent=2)
 
     if args.include_test:
 
-        from test import test_main
+        from test_two import test_main
     class test_ap(object):
         def __init__(self, args):
             self.model_path = log_name
@@ -188,12 +189,13 @@ def main(args):
 
 
 if __name__ == '__main__':
-    seed = 3407
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    # seed = 3410
+    # #seed = 3410
+    # torch.manual_seed(seed)
+    # torch.cuda.manual_seed(seed)
+    # torch.cuda.manual_seed_all(seed)
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
     #DATASET
     DATASET_NAME = 'MovieNet1100'
     #DATA_DIR = 'G:/data/MovieNet1100/shot_frame'
@@ -220,7 +222,7 @@ if __name__ == '__main__':
     FloatTensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
     LongTensor = torch.cuda.LongTensor if torch.cuda.is_available() else torch.LongTensor
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    print(device)
     FloatTensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
     LongTensor = torch.cuda.LongTensor if torch.cuda.is_available() else torch.LongTensor
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -252,7 +254,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--shot_num', type=int, default=5)
 
-    parser.add_argument('--num_categories', type=int, default=num_category[DATASET_NAME], help='num_categories')
+    parser.add_argument('--num_categories', type=int, default=num_category[DATASET_NAME], help='n um_categories')
     parser.add_argument('--num_epoch', type=int, default=0, help='number of epochs of training')
     parser.add_argument('--batch_size', type=int, default=128, help='size of the batches')
 
@@ -274,5 +276,6 @@ if __name__ == '__main__':
     parser.add_argument('--save_interval', type=int, default=5, help='the interval between saved epochs')
     parser.add_argument('--include_test', type=str2bool, default=True, help='do test or not')
     args = parser.parse_args()
+    print(args)
     main(args)
 
