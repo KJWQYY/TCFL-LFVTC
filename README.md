@@ -19,7 +19,8 @@ MovieNet as an example:
 ```bash
 /data/MovieNet/features/prepare_features.sh
 ```
-
+## Model
+https://pan.baidu.com/s/1b0FXuYHjgSS4MJnAdXgRmA Code:4vv6
 ## Train and Evaluate
 ```bash
   python stage_one.py && python stage_two.py
