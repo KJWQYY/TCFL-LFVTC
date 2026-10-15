@@ -185,13 +185,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    # seed = 3410
-    # #seed = 3410
-    # torch.manual_seed(seed)
-    # torch.cuda.manual_seed(seed)
-    # torch.cuda.manual_seed_all(seed)
-    # torch.backends.cudnn.deterministic = True
-    # torch.backends.cudnn.benchmark = False
+
     #DATASET
     DATASET_NAME = 'MovieNet1100'
     #DATA_DIR = 'G:/data/MovieNet1100/shot_frame'
