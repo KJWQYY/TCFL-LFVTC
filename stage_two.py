@@ -19,10 +19,6 @@ import math
 def train(epoch, args):
     model.train()
     for batch_idx, sample in enumerate(train_loader):
-        #print(batch_idx)
-        if batch_idx == 72:
-            print('1111')
-            #input()
         movie_id, label = sample['movie_id'],sample['label_onehot']
         f_one= {}
         f_one['visual_feature'] = sample['visual_feature'].to(device).type(FloatTensor)
