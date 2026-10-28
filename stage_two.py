@@ -8,7 +8,6 @@ import json
 from dataloader.dataset_stagetwo import trailer_multimodal_features
 import torch.optim as optim
 from model import StageTwo
-#from model import StageTwo_11
 import torch.nn as nn
 from sklearn.metrics import average_precision_score, precision_score, recall_score
 from sklearn.metrics import coverage_error, label_ranking_loss
